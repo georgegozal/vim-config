@@ -134,7 +134,16 @@ let g:ale_python_black_options = '--line-length=88'
 
 "*************************************************
 " NERDTree-ის ავტომატურად გახსნა Vim-ის გაშვებისას
- autocmd VimEnter * NERDTree
+ autocmd VimEnter * if argc() == 0 | NERDTree | endif
+
+" Custom alias :Tree for NERDTree
+command! Tree NERDTree | wincmd p
+
+" Custom window navigation shortcuts (mapped for convenience)
+nnoremap <C-h> <C-w>h
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-l> <C-w>l
 
 " NERDTree-ის ავტომატურად დახურვა, თუ ერთადერთი ფანჯარაა
 autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
@@ -159,6 +168,7 @@ function! ActivateVenv()
             let g:ale_python_flake8_executable = l:python_path . ' -m flake8'
             let g:ale_python_pylint_executable = l:python_path . ' -m pylint'
             
+            "echo "Activated virtual environment: " . l:venv_dir
         endif
     endif
 endfunction

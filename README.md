@@ -50,7 +50,10 @@ Launch Vim and run:
 :PlugInstall
 ```
 ### 🎨 Colorscheme
-Monokai is used by default with true color support
+**Monokai** is used by default with true color support
+
+### 🐍 Python Virtual Environment
+This configuration automatically detects your Python virtual environment (`.venv` or `venv`) from the directory where Vim is launched and configures it for seamless Python development.
 
 ### 🛠️ Linting & Fixing
 ALE is configured to automatically lint and fix on save:
@@ -60,6 +63,21 @@ ALE is configured to automatically lint and fix on save:
 
 * HTML: htmlhint, prettier
 
+### NERDTree: File tree navigation
+
+**NERDTree** automatically opens on Vim startup.  
+If it’s closed or not running, you can open it anytime with the command `:Tree`
+
+
+Navigation shortcuts between windows (useful for moving between NERDTree and file buffers):
+
+`ctrl + h` or `ctrl + w + h` — move to the left window
+
+`ctrl + j` or `ctrl + w + j` — move to the window below
+
+`ctrl + k` or `ctrl + w + k` — move to the window above
+
+`ctrl + l` or `ctrl + w + l` — move to the right window
 
 ### 🙌 Contributing
 
