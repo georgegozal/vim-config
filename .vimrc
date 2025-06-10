@@ -127,6 +127,8 @@ let g:ale_fixers = {
 \}
 
 let g:ale_fix_on_save = 1  " ავტომატური ფორმატირება ფაილის შენახვისას
+let g:ale_python_flake8_use_global = 0
+let g:ale_python_flake8_executable = 'python -m flake8'
 let g:ale_python_flake8_options = '--max-line-length=88'
 let g:ale_python_black_options = '--line-length=88'
 
@@ -136,3 +138,29 @@ let g:ale_python_black_options = '--line-length=88'
 
 " NERDTree-ის ავტომატურად დახურვა, თუ ერთადერთი ფანჯარაა
 autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
+
+" Auto-detect venv and configure ALE
+function! ActivateVenv()
+    let l:venv_dir = finddir('.venv', '.;')
+    if empty(l:venv_dir)
+        let l:venv_dir = finddir('venv', '.;')
+    endif
+    
+    if !empty(l:venv_dir)
+        let l:venv_dir = fnamemodify(l:venv_dir, ':p')
+        let l:python_path = l:venv_dir . 'bin/python'
+        
+        if executable(l:python_path)
+            let g:python3_host_prog = l:python_path
+            let $VIRTUAL_ENV = l:venv_dir
+            let $PATH = l:venv_dir . 'bin:' . $PATH
+            
+            " Configure ALE to use venv Python
+            let g:ale_python_flake8_executable = l:python_path . ' -m flake8'
+            let g:ale_python_pylint_executable = l:python_path . ' -m pylint'
+            
+        endif
+    endif
+endfunction
+
+autocmd BufRead,BufNewFile *.py call ActivateVenv()
