@@ -79,6 +79,11 @@ Navigation shortcuts between windows (useful for moving between NERDTree and fil
 
 `ctrl + l` or `ctrl + w + l` — move to the right window
 
+### 📸 Screenshots
+<p align='center'>
+  <img src="https://github.com/georgegozal/vim-config/blob/main/screenshot.png">
+</p>
+
 ### 🙌 Contributing
 
 If you have suggestions or improvements, feel free to fork this repo and submit a pull request!
