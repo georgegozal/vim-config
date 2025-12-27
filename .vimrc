@@ -1,3 +1,12 @@
+" ============================================================================
+" Vim Configuration for Python, JavaScript & Web Development
+" Author: George Gozal
+" ============================================================================
+
+" ============================================================================
+" GENERAL SETTINGS
+" ============================================================================
+
 " Enable syntax highlighting
 syntax on
 
@@ -52,6 +61,59 @@ set encoding=utf-8
 " Integrate with system clipboard (requires Vim compiled with +clipboard)
 set clipboard=unnamedplus
 
+" Set dark background
+set background=dark
+
+" Enable true color support
+set termguicolors
+
+" ============================================================================
+" BETTER DEFAULTS
+" ============================================================================
+
+" Allow switching buffers without saving
+set hidden
+
+" Sensible split directions
+set splitright
+set splitbelow
+
+" Persistent undo across sessions
+set undofile
+set undodir=~/.vim/undodir
+
+" Enhanced command completion
+set wildmenu
+set wildmode=list:longest,full
+
+" Show partial commands
+set showcmd
+
+" Highlight matching brackets
+set showmatch
+set matchtime=2
+
+" More command history
+set history=1000
+
+" Faster updates for better UX
+set updatetime=300
+
+" Don't redraw during macros (performance)
+set lazyredraw
+
+" Better completion options
+set completeopt=menuone,noinsert,noselect
+set shortmess+=c
+
+" Disable swap and backup files (optional)
+set noswapfile
+set nobackup
+
+" ============================================================================
+" KEY MAPPINGS
+" ============================================================================
+
 " Save file with Ctrl+S
 nnoremap <C-s> :w<CR>
 
@@ -68,10 +130,39 @@ nnoremap k gk
 " Use 'jk' as an alternative to Esc in Insert mode
 inoremap jk <Esc>
 
-" Set dark background
-set background=dark
+" Window navigation with Alt (better terminal compatibility)
+nnoremap <M-h> <C-w>h
+nnoremap <M-j> <C-w>j
+nnoremap <M-k> <C-w>k
+nnoremap <M-l> <C-w>l
 
-" Initialize plugin manager (Vim-Plug)
+" Buffer navigation
+nnoremap <leader>n :bnext<CR>
+nnoremap <leader>p :bprev<CR>
+nnoremap <leader>d :bdelete<CR>
+
+" Quick splits
+nnoremap <leader>v :vsplit<CR>
+nnoremap <leader>s :split<CR>
+
+" Quick save and quit
+nnoremap <leader>w :w<CR>
+nnoremap <leader>q :q<CR>
+
+" Keep visual selection after indent
+vnoremap < <gv
+vnoremap > >gv
+
+" Move lines up/down (very useful!)
+nnoremap <M-j> :m .+1<CR>==
+nnoremap <M-k> :m .-2<CR>==
+vnoremap <M-j> :m '>+1<CR>gv=gv
+vnoremap <M-k> :m '<-2<CR>gv=gv
+
+" ============================================================================
+" PLUGIN MANAGER (VIM-PLUG)
+" ============================================================================
+
 call plug#begin('~/.vim/plugged')
 
 " File tree navigation
@@ -83,26 +174,52 @@ Plug 'vim-airline/vim-airline'
 " Syntax checking and linting
 Plug 'dense-analysis/ale'
 
-" Autocompletion  YouCompleteMe unavailable: requires Vim 9.1.0016+
-" Plug 'ycm-core/YouCompleteMe'
-
 " Easy commenting/uncommenting
 Plug 'tpope/vim-commentary'
 
-" Popular color scheme (morhetz/gruvbox)
+" Monokai color scheme
 Plug 'crusoexia/vim-monokai'
 
-" HTML/CSS-ის fast writing.
+" HTML/CSS fast writing
 Plug 'mattn/emmet-vim'
 
-" End plugin manager initialization
+" Fuzzy file finder
+Plug 'ctrlpvim/ctrlp.vim'
+
+" Auto-close brackets
+Plug 'jiangmiao/auto-pairs'
+
+" Git integration
+Plug 'airblade/vim-gitgutter'
+
+" Better syntax highlighting
+Plug 'sheerun/vim-polyglot'
+
 call plug#end()
+
+" ============================================================================
+" COLORSCHEME
+" ============================================================================
 
 " Enable Monokai color scheme
 colorscheme monokai
 
-set termguicolors
+" ============================================================================
+" NERDTREE CONFIGURATION
+" ============================================================================
 
+" Toggle NERDTree with Ctrl+n
+nnoremap <C-n> :NERDTreeToggle<CR>
+
+" Custom alias :Tree for NERDTree
+command! Tree NERDTree | wincmd p
+
+" Auto-close NERDTree if it's the only window left
+autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
+
+" ============================================================================
+" FILE TYPE SPECIFIC SETTINGS
+" ============================================================================
 
 " Python-specific settings
 autocmd FileType python setlocal shiftwidth=4 tabstop=4
@@ -113,42 +230,53 @@ autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
 " HTML-specific settings
 autocmd FileType html setlocal shiftwidth=2 tabstop=2
 
+" Shell script settings
+autocmd FileType sh setlocal shiftwidth=4 tabstop=4
 
+" XML settings
+autocmd FileType xml setlocal shiftwidth=2 tabstop=2
+
+" JSON settings
+autocmd FileType json setlocal shiftwidth=2 tabstop=2
+
+" YAML settings
+autocmd FileType yaml setlocal shiftwidth=2 tabstop=2
+
+" ============================================================================
+" ALE CONFIGURATION
+" ============================================================================
+
+" Configure linters
 let g:ale_linters = {
 \   'python': ['flake8', 'pylint'],
 \   'javascript': ['eslint'],
 \   'html': ['htmlhint'],
 \}
 
+" Configure fixers
 let g:ale_fixers = {
 \   'python': ['black'],
 \   'javascript': ['prettier'],
 \   'html': ['prettier'],
 \}
 
-let g:ale_fix_on_save = 1  " ავტომატური ფორმატირება ფაილის შენახვისას
+" Auto-fix on save
+let g:ale_fix_on_save = 1
+
+" Python-specific ALE settings
 let g:ale_python_flake8_use_global = 0
 let g:ale_python_flake8_executable = 'python -m flake8'
 let g:ale_python_flake8_options = '--max-line-length=88'
 let g:ale_python_black_options = '--line-length=88'
+let g:ale_python_auto_virtualenv = 1
 
-"*************************************************
-" NERDTree-ის ავტომატურად გახსნა Vim-ის გაშვებისას
- autocmd VimEnter * if argc() == 0 | NERDTree | endif
+" Show ALE errors in airline
+let g:airline#extensions#ale#enabled = 1
 
-" Custom alias :Tree for NERDTree
-command! Tree NERDTree | wincmd p
+" ============================================================================
+" PYTHON VIRTUAL ENVIRONMENT AUTO-DETECTION
+" ============================================================================
 
-" Custom window navigation shortcuts (mapped for convenience)
-nnoremap <C-h> <C-w>h
-nnoremap <C-j> <C-w>j
-nnoremap <C-k> <C-w>k
-nnoremap <C-l> <C-w>l
-
-" NERDTree-ის ავტომატურად დახურვა, თუ ერთადერთი ფანჯარაა
-autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
-
-" Auto-detect venv and configure ALE
 function! ActivateVenv()
     let l:venv_dir = finddir('.venv', '.;')
     if empty(l:venv_dir)
@@ -167,10 +295,17 @@ function! ActivateVenv()
             " Configure ALE to use venv Python
             let g:ale_python_flake8_executable = l:python_path . ' -m flake8'
             let g:ale_python_pylint_executable = l:python_path . ' -m pylint'
-            
-            "echo "Activated virtual environment: " . l:venv_dir
         endif
     endif
 endfunction
 
 autocmd BufRead,BufNewFile *.py call ActivateVenv()
+
+" ============================================================================
+" INITIALIZATION
+" ============================================================================
+
+" Create undo directory if it doesn't exist
+if !isdirectory($HOME."/.vim/undodir")
+    call mkdir($HOME."/.vim/undodir", "p", 0700)
+endif
