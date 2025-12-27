@@ -130,16 +130,30 @@ nnoremap k gk
 " Use 'jk' as an alternative to Esc in Insert mode
 inoremap jk <Esc>
 
-" Window navigation with Alt (better terminal compatibility)
-nnoremap <M-h> <C-w>h
-nnoremap <M-j> <C-w>j
-nnoremap <M-k> <C-w>k
-nnoremap <M-l> <C-w>l
+" ============================================================================
+" BUFFER & WINDOW NAVIGATION
+" ============================================================================
 
 " Buffer navigation
 nnoremap <leader>n :bnext<CR>
 nnoremap <leader>p :bprev<CR>
 nnoremap <leader>d :bdelete<CR>
+
+" Show buffer list and prompt for buffer switch
+nnoremap <leader>b :ls<CR>:b<Space>
+
+" Quick buffer switching by number (useful when many files open)
+nnoremap <leader>1 :b1<CR>
+nnoremap <leader>2 :b2<CR>
+nnoremap <leader>3 :b3<CR>
+nnoremap <leader>4 :b4<CR>
+nnoremap <leader>5 :b5<CR>
+
+" Delete buffer without closing window
+nnoremap <leader>x :bp<bar>sp<bar>bn<bar>bd<CR>
+
+" Window navigation (standard Vim - Ctrl+w then h/j/k/l)
+" Already built-in, no custom mapping needed
 
 " Quick splits
 nnoremap <leader>v :vsplit<CR>
@@ -195,6 +209,9 @@ Plug 'airblade/vim-gitgutter'
 " Better syntax highlighting
 Plug 'sheerun/vim-polyglot'
 
+" Buffer list in tabline
+Plug 'ap/vim-buftabline'
+
 call plug#end()
 
 " ============================================================================
@@ -230,8 +247,8 @@ autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
 " HTML-specific settings
 autocmd FileType html setlocal shiftwidth=2 tabstop=2
 
-" Shell script settings
-autocmd FileType sh setlocal shiftwidth=4 tabstop=4
+" Shell script settings (2 spaces is standard)
+autocmd FileType sh setlocal shiftwidth=2 tabstop=2
 
 " XML settings
 autocmd FileType xml setlocal shiftwidth=2 tabstop=2

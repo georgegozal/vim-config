@@ -29,6 +29,7 @@ This is my personal Vim configuration tailored for Python, JavaScript, Shell scr
 - **auto-pairs**: Auto-close brackets and quotes
 - **vim-gitgutter**: Git diff indicators in the gutter
 - **vim-polyglot**: Enhanced syntax highlighting for all languages
+- **vim-buftabline**: Visual buffer list at the top of the screen
 
 ---
 
@@ -65,21 +66,31 @@ Launch Vim and run:
 
 ## ⌨️ Key Mappings
 
-### Window Navigation
-- `Alt+h` — move to the left window
-- `Alt+j` — move to the window below
-- `Alt+k` — move to the window above
-- `Alt+l` — move to the right window
-
 ### File Navigation
 - `Ctrl+n` — toggle NERDTree file explorer
 - `Ctrl+p` — fuzzy file finder (CtrlP)
 - `:Tree` — custom command to open NERDTree
 
+### NERDTree File Opening
+- `Enter` — open file in current window
+- `i` — open file in horizontal split
+- `s` — open file in vertical split  
+- `t` — open file in new tab
+
 ### Buffer Management
 - `\n` — next buffer
 - `\p` — previous buffer
 - `\d` — delete buffer
+- `\b` — show buffer list and switch
+- `\1` to `\5` — jump to buffer 1-5
+- `\x` — delete buffer without closing window
+- `:ls` — show all open buffers
+
+### Window Navigation
+- `Ctrl+w h` — move to left window
+- `Ctrl+w j` — move to bottom window
+- `Ctrl+w k` — move to top window
+- `Ctrl+w l` — move to right window
 
 ### Splits
 - `\v` — vertical split
@@ -134,7 +145,7 @@ ALE is configured to automatically lint and fix on save:
 - **Python**: 4-space indentation
 - **JavaScript**: 2-space indentation
 - **HTML/XML/JSON/YAML**: 2-space indentation
-- **Shell scripts**: 4-space indentation
+- **Shell scripts**: 2-space indentation (standard convention)
 
 ---
 
