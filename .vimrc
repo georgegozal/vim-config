@@ -1,11 +1,44 @@
 " ============================================================================
 " Vim Configuration for Python, JavaScript & Web Development
 " Author: George Gozal
+" macOS Compatible Version
 " ============================================================================
+
+" ============================================================================
+" MACOS COMPATIBILITY FIXES
+" ============================================================================
+
+" Detect operating system
+let s:is_mac = has('mac') || has('macunix')
+let s:is_linux = has('unix') && !has('macunix')
+
+" macOS-specific terminal setup
+if s:is_mac
+    " Fix for macOS Terminal color issues
+    if $TERM_PROGRAM ==# 'Apple_Terminal'
+        set notermguicolors
+    else
+        " iTerm2 and other modern terminals support true colors
+        set termguicolors
+    endif
+    
+    " macOS clipboard integration
+    set clipboard=unnamed
+    
+    " Fix backspace on macOS
+    set backspace=indent,eol,start
+else
+    " Linux settings
+    set termguicolors
+    set clipboard=unnamedplus
+endif
 
 " ============================================================================
 " GENERAL SETTINGS
 " ============================================================================
+
+" Enable filetype detection, plugins, and indentation
+filetype plugin indent on
 
 " Enable syntax highlighting
 syntax on
@@ -31,9 +64,6 @@ set cursorline
 " Automatic indentation for new lines
 set autoindent
 
-" Smart indentation (e.g., for C-style code)
-set smartindent
-
 " Disable line wrapping
 set nowrap
 
@@ -58,14 +88,8 @@ set mouse=a
 " Use UTF-8 encoding
 set encoding=utf-8
 
-" Integrate with system clipboard (requires Vim compiled with +clipboard)
-set clipboard=unnamedplus
-
 " Set dark background
 set background=dark
-
-" Enable true color support
-set termguicolors
 
 " ============================================================================
 " BETTER DEFAULTS
@@ -140,7 +164,7 @@ nnoremap <leader>p :bprev<CR>
 nnoremap <leader>d :bdelete<CR>
 
 " Show buffer list and prompt for buffer switch
-nnoremap <leader>b :ls<CR>:b<Space>
+nnoremap <leader>b :ls<CR>: b<Space>
 
 " Quick buffer switching by number (useful when many files open)
 nnoremap <leader>1 :b1<CR>
@@ -150,10 +174,7 @@ nnoremap <leader>4 :b4<CR>
 nnoremap <leader>5 :b5<CR>
 
 " Delete buffer without closing window
-nnoremap <leader>x :bp<bar>sp<bar>bn<bar>bd<CR>
-
-" Window navigation (standard Vim - Ctrl+w then h/j/k/l)
-" Already built-in, no custom mapping needed
+nnoremap <leader>x : bp<bar>sp<bar>bn<bar>bd<CR>
 
 " Quick splits
 nnoremap <leader>v :vsplit<CR>
@@ -161,17 +182,26 @@ nnoremap <leader>s :split<CR>
 
 " Quick save and quit
 nnoremap <leader>w :w<CR>
-nnoremap <leader>q :q<CR>
+nnoremap <leader>q : q<CR>
 
 " Keep visual selection after indent
 vnoremap < <gv
 vnoremap > >gv
 
-" Move lines up/down (very useful!)
-nnoremap <M-j> :m .+1<CR>==
-nnoremap <M-k> :m .-2<CR>==
-vnoremap <M-j> :m '>+1<CR>gv=gv
-vnoremap <M-k> :m '<-2<CR>gv=gv
+" macOS-compatible line moving (works without Alt key issues)
+" Use Ctrl+j and Ctrl+k instead of Alt/Meta
+nnoremap <C-j> :m .+1<CR>==
+nnoremap <C-k> :m .-2<CR>==
+vnoremap <C-j> :m '>+1<CR>gv=gv
+vnoremap <C-k> :m '<-2<CR>gv=gv
+
+" Alternative:  If you're using iTerm2, you can keep Alt mappings
+if !s:is_mac || $TERM_PROGRAM ==# 'iTerm.app'
+    nnoremap <M-j> :m .+1<CR>==
+    nnoremap <M-k> :m .-2<CR>==
+    vnoremap <M-j> :m '>+1<CR>gv=gv
+    vnoremap <M-k> :m '<-2<CR>gv=gv
+endif
 
 " ============================================================================
 " PLUGIN MANAGER (VIM-PLUG)
@@ -218,8 +248,13 @@ call plug#end()
 " COLORSCHEME
 " ============================================================================
 
-" Enable Monokai color scheme
-colorscheme monokai
+" Enable Monokai color scheme with fallback
+try
+    colorscheme monokai
+catch
+    " Fallback if monokai isn't installed yet
+    colorscheme desert
+endtry
 
 " ============================================================================
 " NERDTREE CONFIGURATION
@@ -228,11 +263,20 @@ colorscheme monokai
 " Toggle NERDTree with Ctrl+n
 nnoremap <C-n> :NERDTreeToggle<CR>
 
-" Custom alias :Tree for NERDTree
+" Custom alias : Tree for NERDTree
 command! Tree NERDTree | wincmd p
 
 " Auto-close NERDTree if it's the only window left
 autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
+
+" macOS-specific NERDTree settings
+if s:is_mac
+    " Use ASCII characters for NERDTree if terminal doesn't support Unicode well
+    if $TERM_PROGRAM ==# 'Apple_Terminal'
+        let g:NERDTreeDirArrowExpandable = '+'
+        let g:NERDTreeDirArrowCollapsible = '-'
+    endif
+endif
 
 " ============================================================================
 " FILE TYPE SPECIFIC SETTINGS
@@ -247,8 +291,8 @@ autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
 " HTML-specific settings
 autocmd FileType html setlocal shiftwidth=2 tabstop=2
 
-" Shell script settings (2 spaces is standard)
-autocmd FileType sh setlocal shiftwidth=2 tabstop=2
+" Shell script settings
+autocmd FileType sh setlocal shiftwidth=4 tabstop=4
 
 " XML settings
 autocmd FileType xml setlocal shiftwidth=2 tabstop=2
@@ -266,13 +310,14 @@ autocmd FileType yaml setlocal shiftwidth=2 tabstop=2
 " Configure linters
 let g:ale_linters = {
 \   'python': ['flake8', 'pylint'],
-\   'javascript': ['eslint'],
+\   'javascript':  ['eslint'],
 \   'html': ['htmlhint'],
+\   'sh': ['shellcheck'],
 \}
 
 " Configure fixers
 let g:ale_fixers = {
-\   'python': ['black'],
+\   'python': ['isort', 'black'],
 \   'javascript': ['prettier'],
 \   'html': ['prettier'],
 \}
@@ -282,7 +327,7 @@ let g:ale_fix_on_save = 1
 
 " Python-specific ALE settings
 let g:ale_python_flake8_use_global = 0
-let g:ale_python_flake8_executable = 'python -m flake8'
+let g:ale_python_flake8_executable = 'python3 -m flake8'
 let g:ale_python_flake8_options = '--max-line-length=88'
 let g:ale_python_black_options = '--line-length=88'
 let g:ale_python_auto_virtualenv = 1
@@ -295,28 +340,57 @@ let g:airline#extensions#ale#enabled = 1
 " ============================================================================
 
 function! ActivateVenv()
-    let l:venv_dir = finddir('.venv', '.;')
+    let l:venv_dir = finddir('.venv', '. ;')
     if empty(l:venv_dir)
         let l:venv_dir = finddir('venv', '.;')
     endif
     
-    if !empty(l:venv_dir)
+    if ! empty(l:venv_dir)
         let l:venv_dir = fnamemodify(l:venv_dir, ':p')
-        let l:python_path = l:venv_dir . 'bin/python'
+        
+        " macOS uses different path structure for Python in venv
+        if s:is_mac
+            let l:python_path = l:venv_dir . 'bin/python3'
+        else
+            let l:python_path = l:venv_dir . 'bin/python'
+        endif
         
         if executable(l:python_path)
             let g:python3_host_prog = l:python_path
             let $VIRTUAL_ENV = l:venv_dir
-            let $PATH = l:venv_dir . 'bin:' . $PATH
+            let $PATH = l:venv_dir . 'bin: ' . $PATH
             
             " Configure ALE to use venv Python
-            let g:ale_python_flake8_executable = l:python_path . ' -m flake8'
+            let g:ale_python_flake8_executable = l:python_path .  ' -m flake8'
             let g:ale_python_pylint_executable = l:python_path . ' -m pylint'
         endif
     endif
 endfunction
 
 autocmd BufRead,BufNewFile *.py call ActivateVenv()
+
+" ============================================================================
+" MACOS PYTHON3 SETUP
+" ============================================================================
+
+if s:is_mac
+    " Try to find Python 3 installation on macOS
+    if executable('python3')
+        let g:python3_host_prog = exepath('python3')
+    elseif executable('/usr/local/bin/python3')
+        let g:python3_host_prog = '/usr/local/bin/python3'
+    elseif executable('/opt/homebrew/bin/python3')
+        " Apple Silicon Mac (M1/M2/M3)
+        let g:python3_host_prog = '/opt/homebrew/bin/python3'
+    endif
+endif
+
+" ============================================================================
+" AUTO-CLEANUP
+" ============================================================================
+
+" Remove trailing whitespace on save for Python and shell scripts
+autocmd BufWritePre *.py,*.sh,*.bash %s/\s\+$//e
 
 " ============================================================================
 " INITIALIZATION
