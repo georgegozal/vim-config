@@ -1,0 +1,255 @@
+" ============================================================================
+" Vim Lite Configuration — Zero Plugins Required
+" Author: George Gozal
+" All features use vim built-ins only. No :PlugInstall needed.
+" Usage: vim -u ~/.vimrc.lite  OR  copy to ~/.vimrc on a fresh machine
+" ============================================================================
+
+" Required when loading with vim -u (skips defaults.vim)
+set nocompatible
+set backspace=indent,eol,start
+
+" ============================================================================
+" MACOS COMPATIBILITY
+" ============================================================================
+
+let s:is_mac = has('mac') || has('macunix')
+
+if s:is_mac
+    if $TERM_PROGRAM ==# 'Apple_Terminal'
+        set notermguicolors
+    else
+        set termguicolors
+    endif
+    set clipboard=unnamed
+    set backspace=indent,eol,start
+else
+    set termguicolors
+    set clipboard=unnamedplus
+endif
+
+" ============================================================================
+" GENERAL SETTINGS
+" ============================================================================
+
+filetype plugin indent on
+syntax on
+
+set number
+set relativenumber
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set cursorline
+set autoindent
+set nowrap
+set ignorecase
+set smartcase
+set incsearch
+set hlsearch
+set backspace=indent,eol,start
+set mouse=a
+set encoding=utf-8
+set background=dark
+
+" ============================================================================
+" BETTER DEFAULTS
+" ============================================================================
+
+set hidden
+set splitright
+set splitbelow
+set undofile
+set undodir=~/.vim/undodir
+set wildmenu
+set wildmode=list:longest,full
+set showcmd
+set showmatch
+set matchtime=2
+set history=1000
+set updatetime=300
+set lazyredraw
+set completeopt=menuone,noinsert,noselect
+set shortmess+=c
+set noswapfile
+set nobackup
+
+" ============================================================================
+" COLORSCHEME (built-in)
+" ============================================================================
+
+colorscheme desert
+
+" Improve desert a bit for modern terminals
+highlight CursorLine   cterm=NONE ctermbg=236 guibg=#303030
+highlight CursorLineNr ctermfg=Yellow guifg=#ffff00
+highlight LineNr        ctermfg=240 guifg=#585858
+highlight StatusLine    cterm=bold ctermfg=White ctermbg=235 guifg=#ffffff guibg=#262626
+highlight StatusLineNC  ctermfg=Grey ctermbg=235 guifg=#808080 guibg=#262626
+
+" ============================================================================
+" BUILT-IN STATUS LINE (replaces vim-airline)
+" ============================================================================
+
+set laststatus=2
+set statusline=
+set statusline+=\ %f                   " file path
+set statusline+=\ %m%r                 " modified/readonly flags
+set statusline+=%=                     " right align
+set statusline+=\ %y                   " filetype
+set statusline+=\ [%{&fileencoding}]   " encoding
+set statusline+=\ %l:%c               " line:column
+set statusline+=\ [%p%%]              " percentage
+
+" ============================================================================
+" BUILT-IN FILE EXPLORER (replaces NERDTree)
+" ============================================================================
+
+" netrw is built into vim — use :Explore or :Vexplore
+let g:netrw_banner = 0         " hide banner
+let g:netrw_liststyle = 3      " tree view
+let g:netrw_browse_split = 4   " open in previous window
+let g:netrw_altv = 1           " open splits to the right
+let g:netrw_winsize = 25       " 25% width
+
+" Toggle netrw sidebar with Ctrl+n
+nnoremap <C-n> :Lexplore<CR>
+
+" :Tree command (same as full .vimrc)
+command! Tree Lexplore
+
+
+" ============================================================================
+" BUILT-IN FUZZY FIND (replaces ctrlp)
+" ============================================================================
+
+" Search recursively in subdirectories
+set path+=**
+
+" :find <filename> now works with tab completion across the project
+" :b <partial> switches buffers with tab completion
+
+" ============================================================================
+" BUILT-IN COMMENTING (replaces vim-commentary)
+" ============================================================================
+
+" Toggle comment with <leader>c in normal and visual mode
+" Uses filetype-aware comment strings
+augroup commenting
+    autocmd!
+    autocmd FileType python,sh,bash,zsh,yaml let b:comment_str = '# '
+    autocmd FileType javascript,java,c,cpp   let b:comment_str = '// '
+    autocmd FileType vim                      let b:comment_str = '" '
+    autocmd FileType html,xml                 let b:comment_str = '<!-- '
+augroup END
+
+function! ToggleComment() range
+    let l:cs = get(b:, 'comment_str', '# ')
+    let l:lines = getline(a:firstline, a:lastline)
+    " Check if first non-empty line is commented
+    let l:uncomment = 0
+    for l:line in l:lines
+        if l:line =~ '^\s*$' | continue | endif
+        if l:line =~ '^\s*' . escape(l:cs, '/*')
+            let l:uncomment = 1
+        endif
+        break
+    endfor
+    for l:lnum in range(a:firstline, a:lastline)
+        let l:line = getline(l:lnum)
+        if l:line =~ '^\s*$' | continue | endif
+        if l:uncomment
+            call setline(l:lnum, substitute(l:line, '^\(\s*\)' . escape(l:cs, '/*'), '\1', ''))
+        else
+            call setline(l:lnum, substitute(l:line, '^\(\s*\)', '\1' . escape(l:cs, '&'), ''))
+        endif
+    endfor
+endfunction
+
+nnoremap <leader>c :call ToggleComment()<CR>
+vnoremap <leader>c :call ToggleComment()<CR>
+
+" ============================================================================
+" KEY MAPPINGS
+" ============================================================================
+
+nnoremap <leader>h :nohlsearch<CR>
+nnoremap j gj
+nnoremap k gk
+inoremap jk <Esc>
+
+" ============================================================================
+" BUFFER & WINDOW NAVIGATION
+" ============================================================================
+
+nnoremap <leader>n :bnext<CR>
+nnoremap <leader>p :bprev<CR>
+nnoremap <leader>d :bdelete<CR>
+nnoremap <leader>b :ls<CR>:b<Space>
+nnoremap <leader>1 :b1<CR>
+nnoremap <leader>2 :b2<CR>
+nnoremap <leader>3 :b3<CR>
+nnoremap <leader>4 :b4<CR>
+nnoremap <leader>5 :b5<CR>
+nnoremap <leader>x :bp<bar>sp<bar>bn<bar>bd<CR>
+nnoremap <leader>v :vsplit<CR>
+nnoremap <leader>s :split<CR>
+nnoremap <leader>w :w<CR>
+nnoremap <leader>q :q<CR>
+
+" Keep visual selection after indent
+vnoremap < <gv
+vnoremap > >gv
+
+
+" ============================================================================
+" BUILT-IN BUFFER TABLINE (replaces vim-buftabline)
+" ============================================================================
+
+" Show tabline when 2+ buffers open
+set showtabline=2
+
+function! BufTabLine()
+    let s = ''
+    for i in range(1, bufnr('$'))
+        if buflisted(i)
+            let name = fnamemodify(bufname(i), ':t')
+            if empty(name) | let name = '[No Name]' | endif
+            if i == bufnr('%')
+                let s .= ' %#TabLineSel# ' . name . ' '
+            else
+                let s .= ' %#TabLine# ' . name . ' '
+            endif
+        endif
+    endfor
+    return s . '%#TabLineFill#'
+endfunction
+
+set tabline=%!BufTabLine()
+
+" ============================================================================
+" FILE TYPE SPECIFIC SETTINGS
+" ============================================================================
+
+autocmd FileType python     setlocal shiftwidth=4 tabstop=4
+autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
+autocmd FileType html       setlocal shiftwidth=2 tabstop=2
+autocmd FileType sh         setlocal shiftwidth=4 tabstop=4
+autocmd FileType xml        setlocal shiftwidth=2 tabstop=2
+autocmd FileType json       setlocal shiftwidth=2 tabstop=2
+autocmd FileType yaml       setlocal shiftwidth=2 tabstop=2
+
+" ============================================================================
+" AUTO-CLEANUP
+" ============================================================================
+
+" Remove trailing whitespace on save for Python and shell scripts
+autocmd BufWritePre *.py,*.sh,*.bash %s/\s\+$//e
+
+" ============================================================================
+" INITIALIZATION
+" ============================================================================
+
+if !isdirectory($HOME."/.vim/undodir")
+    call mkdir($HOME."/.vim/undodir", "p", 0700)
+endif
