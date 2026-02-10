@@ -30,7 +30,14 @@ if s:is_mac
 else
     " Linux settings
     set termguicolors
-    set clipboard=unnamedplus
+    if has('clipboard')
+        set clipboard=unnamedplus
+    else
+        " Workaround: sync yank/paste with system clipboard via xclip
+        autocmd TextYankPost * call system('xclip -selection clipboard', @")
+        nnoremap p :let @"=system('xclip -selection clipboard -o')<CR>p
+        nnoremap P :let @"=system('xclip -selection clipboard -o')<CR>P
+    endif
 endif
 
 " ============================================================================
