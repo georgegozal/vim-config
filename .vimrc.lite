@@ -125,6 +125,13 @@ nnoremap <C-n> :Lexplore<CR>
 " :Tree command (same as full .vimrc)
 command! Tree Lexplore
 
+" Open netrw as a proper sidebar when vim starts with a directory argument
+" This prevents 'vim .' from putting netrw in the main window, which would
+" cause Ctrl+n to open a duplicate sidebar
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists('s:std_in') |
+    \ execute 'cd' fnameescape(argv()[0]) | enew | Lexplore | endif
+
 
 " ============================================================================
 " BUILT-IN FUZZY FIND (replaces ctrlp)

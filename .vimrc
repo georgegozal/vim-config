@@ -270,11 +270,22 @@ endtry
 " Toggle NERDTree with Ctrl+n
 nnoremap <C-n> :NERDTreeToggle<CR>
 
-" Custom alias : Tree for NERDTree
-command! Tree NERDTree | wincmd p
+" Custom alias :Tree for NERDTree (toggles, won't open duplicates)
+command! Tree NERDTreeToggle
+
+" Show hidden files (dotfiles) by default
+let g:NERDTreeShowHidden = 1
 
 " Auto-close NERDTree if it's the only window left
 autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
+
+" Open NERDTree as a proper sidebar when vim starts with a directory argument
+" This prevents 'vim .' from putting NERDTree in the main window, which would
+" cause Ctrl+n to open a duplicate sidebar
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists('s:std_in') |
+    \ execute 'cd' fnameescape(argv()[0]) | enew |
+    \ execute 'NERDTree' fnameescape(getcwd()) | wincmd p | endif
 
 " macOS-specific NERDTree settings
 if s:is_mac
