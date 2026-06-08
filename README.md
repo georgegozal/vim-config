@@ -212,4 +212,4 @@ If you have suggestions or improvements, feel free to fork this repo and submit 
 
 ## License
 
-This configuration is free to use and modify for personal or commercial use.
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). You are free to use, modify, and distribute this configuration, provided that any modifications are also released under the same license.
