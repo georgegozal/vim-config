@@ -181,7 +181,7 @@ nnoremap <leader>4 :b4<CR>
 nnoremap <leader>5 :b5<CR>
 
 " Delete buffer without closing window
-nnoremap <leader>x : bp<bar>sp<bar>bn<bar>bd<CR>
+nnoremap <leader>x :bp<bar>sp<bar>bn<bar>bd<CR>
 
 " Quick splits
 nnoremap <leader>v :vsplit<CR>
@@ -189,7 +189,7 @@ nnoremap <leader>s :split<CR>
 
 " Quick save and quit
 nnoremap <leader>w :w<CR>
-nnoremap <leader>q : q<CR>
+nnoremap <leader>q :q<CR>
 
 " Keep visual selection after indent
 vnoremap < <gv
@@ -250,6 +250,9 @@ Plug 'sheerun/vim-polyglot'
 Plug 'ap/vim-buftabline'
 
 call plug#end()
+
+" Fuzzy file finder
+nnoremap <C-p> :CtrlP<CR>
 
 " ============================================================================
 " COLORSCHEME
@@ -358,7 +361,7 @@ let g:airline#extensions#ale#enabled = 1
 " ============================================================================
 
 function! ActivateVenv()
-    let l:venv_dir = finddir('.venv', '. ;')
+    let l:venv_dir = finddir('.venv', '.;')
     if empty(l:venv_dir)
         let l:venv_dir = finddir('venv', '.;')
     endif
@@ -376,11 +379,11 @@ function! ActivateVenv()
         if executable(l:python_path)
             let g:python3_host_prog = l:python_path
             let $VIRTUAL_ENV = l:venv_dir
-            let $PATH = l:venv_dir . 'bin: ' . $PATH
+            let $PATH = l:venv_dir . 'bin:' . $PATH
             
-            " Configure ALE to use venv Python
-            let g:ale_python_flake8_executable = l:python_path .  ' -m flake8'
-            let g:ale_python_pylint_executable = l:python_path . ' -m pylint'
+            " Configure ALE to use venv linters
+            let g:ale_python_flake8_executable = l:venv_dir . 'bin/flake8'
+            let g:ale_python_pylint_executable = l:venv_dir . 'bin/pylint'
         endif
     endif
 endfunction

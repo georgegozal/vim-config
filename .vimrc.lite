@@ -10,25 +10,66 @@ set nocompatible
 set backspace=indent,eol,start
 
 " ============================================================================
-" MACOS COMPATIBILITY
+" TERMINAL & COLOR COMPATIBILITY
 " ============================================================================
 
 let s:is_mac = has('mac') || has('macunix')
 
-if s:is_mac
-    if $TERM_PROGRAM ==# 'Apple_Terminal'
-        set notermguicolors
-    else
-        set termguicolors
+function! s:HasTrueColor() abort
+    if !has('termguicolors')
+        return 0
     endif
-    set clipboard=unnamed
-    set backspace=indent,eol,start
-else
+    if s:is_mac && $TERM_PROGRAM ==# 'Apple_Terminal'
+        return 0
+    endif
+    return $COLORTERM ==# 'truecolor' || $COLORTERM ==# '24bit'
+        \ || $TERM_PROGRAM ==# 'iTerm.app'
+        \ || $TERM_PROGRAM ==# 'vscode'
+        \ || $TERM =~# 'direct'
+        \ || $TERM =~# 'kitty'
+        \ || $TERM =~# 'wezterm'
+        \ || $TERM =~# 'alacritty'
+endfunction
+
+let s:use_termguicolors = s:HasTrueColor()
+if s:use_termguicolors
     set termguicolors
+else
+    set notermguicolors
+    if &t_Co < 256 && ($TERM =~# '256color' || $TERM =~# 'xterm')
+        set t_Co=256
+    endif
+endif
+
+function! s:ApplyUiHighlights() abort
+    if s:use_termguicolors
+        highlight CursorLine   guibg=#303030
+        highlight CursorLineNr guifg=#ffff00
+        highlight LineNr       guifg=#585858
+        highlight StatusLine   guibg=#262626 guifg=#ffffff
+        highlight StatusLineNC guibg=#262626 guifg=#808080
+    elseif &t_Co >= 256
+        highlight CursorLine   cterm=NONE ctermbg=236
+        highlight CursorLineNr ctermfg=226 cterm=bold
+        highlight LineNr       ctermfg=243
+        highlight Normal       ctermfg=252 ctermbg=234
+        highlight StatusLine   cterm=bold ctermfg=15 ctermbg=236
+        highlight StatusLineNC ctermfg=246 ctermbg=236
+    else
+        highlight CursorLine   cterm=underline
+        highlight CursorLineNr ctermfg=Yellow cterm=bold
+        highlight LineNr       ctermfg=Cyan
+        highlight StatusLine   cterm=bold ctermfg=White ctermbg=Black
+        highlight StatusLineNC ctermfg=Grey ctermbg=Black
+    endif
+endfunction
+
+if s:is_mac
+    set clipboard=unnamed
+else
     if has('clipboard')
         set clipboard=unnamedplus
     else
-        " Workaround: sync yank/paste with system clipboard via xclip
         autocmd TextYankPost * call system('xclip -selection clipboard', @")
         nnoremap p :let @"=system('xclip -selection clipboard -o')<CR>p
         nnoremap P :let @"=system('xclip -selection clipboard -o')<CR>P
@@ -86,13 +127,8 @@ set nobackup
 " ============================================================================
 
 colorscheme desert
-
-" Improve desert a bit for modern terminals
-highlight CursorLine   cterm=NONE ctermbg=236 guibg=#303030
-highlight CursorLineNr ctermfg=Yellow guifg=#ffff00
-highlight LineNr        ctermfg=240 guifg=#585858
-highlight StatusLine    cterm=bold ctermfg=White ctermbg=235 guifg=#ffffff guibg=#262626
-highlight StatusLineNC  ctermfg=Grey ctermbg=235 guifg=#808080 guibg=#262626
+call s:ApplyUiHighlights()
+syntax enable
 
 " ============================================================================
 " BUILT-IN STATUS LINE (replaces vim-airline)
@@ -151,20 +187,20 @@ set path+=**
 " Uses filetype-aware comment strings
 augroup commenting
     autocmd!
-    autocmd FileType python,sh,bash,zsh,yaml let b:comment_str = '# '
-    autocmd FileType javascript,java,c,cpp   let b:comment_str = '// '
-    autocmd FileType vim                      let b:comment_str = '" '
-    autocmd FileType html,xml                 let b:comment_str = '<!-- '
+    autocmd FileType python,sh,bash,zsh,yaml let b:comment_prefix = '# ' | let b:comment_suffix = ''
+    autocmd FileType javascript,java,c,cpp   let b:comment_prefix = '// ' | let b:comment_suffix = ''
+    autocmd FileType vim                      let b:comment_prefix = '" ' | let b:comment_suffix = ''
+    autocmd FileType html,xml                 let b:comment_prefix = '<!-- ' | let b:comment_suffix = ' -->'
 augroup END
 
 function! ToggleComment() range
-    let l:cs = get(b:, 'comment_str', '# ')
+    let l:prefix = get(b:, 'comment_prefix', '# ')
+    let l:suffix = get(b:, 'comment_suffix', '')
     let l:lines = getline(a:firstline, a:lastline)
-    " Check if first non-empty line is commented
     let l:uncomment = 0
     for l:line in l:lines
         if l:line =~ '^\s*$' | continue | endif
-        if l:line =~ '^\s*' . escape(l:cs, '/*')
+        if l:line =~ '^\s*' . escape(l:prefix, '/*')
             let l:uncomment = 1
         endif
         break
@@ -173,9 +209,17 @@ function! ToggleComment() range
         let l:line = getline(l:lnum)
         if l:line =~ '^\s*$' | continue | endif
         if l:uncomment
-            call setline(l:lnum, substitute(l:line, '^\(\s*\)' . escape(l:cs, '/*'), '\1', ''))
+            if !empty(l:suffix)
+                call setline(l:lnum, substitute(l:line, '^\(\s*\)' . escape(l:prefix, '/*') . '\(.*\)' . escape(l:suffix, '/*') . '\s*$', '\1\2', ''))
+            else
+                call setline(l:lnum, substitute(l:line, '^\(\s*\)' . escape(l:prefix, '/*'), '\1', ''))
+            endif
         else
-            call setline(l:lnum, substitute(l:line, '^\(\s*\)', '\1' . escape(l:cs, '&'), ''))
+            if !empty(l:suffix)
+                call setline(l:lnum, substitute(l:line, '^\(\s*\)\(.*\)\s*$', '\1' . l:prefix . '\2' . l:suffix, ''))
+            else
+                call setline(l:lnum, substitute(l:line, '^\(\s*\)', '\1' . escape(l:prefix, '&'), ''))
+            endif
         endif
     endfor
 endfunction
@@ -187,10 +231,24 @@ vnoremap <leader>c :call ToggleComment()<CR>
 " KEY MAPPINGS
 " ============================================================================
 
+nnoremap <C-s> :w<CR>
+nnoremap <C-q> :q<CR>
 nnoremap <leader>h :nohlsearch<CR>
 nnoremap j gj
 nnoremap k gk
 inoremap jk <Esc>
+
+nnoremap <C-j> :m .+1<CR>==
+nnoremap <C-k> :m .-2<CR>==
+vnoremap <C-j> :m '>+1<CR>gv=gv
+vnoremap <C-k> :m '<-2<CR>gv=gv
+
+if !s:is_mac || $TERM_PROGRAM ==# 'iTerm.app'
+    nnoremap <M-j> :m .+1<CR>==
+    nnoremap <M-k> :m .-2<CR>==
+    vnoremap <M-j> :m '>+1<CR>gv=gv
+    vnoremap <M-k> :m '<-2<CR>gv=gv
+endif
 
 " ============================================================================
 " BUFFER & WINDOW NAVIGATION
