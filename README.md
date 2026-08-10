@@ -26,6 +26,11 @@ Both configs are **cross-platform**: macOS (Apple Terminal & iTerm2) and Linux (
 - Sensible split behavior
 - macOS + Linux compatibility with automatic OS detection
 - Trailing whitespace auto-cleanup on save for `.py`, `.sh`, `.bash`
+- Dotfiles hidden by default in the file tree (easy toggle)
+- Clock and session timer in the status line
+- `:Theme` command to switch colorschemes
+- `:Open` (Vim 9.2+ built-in) to reveal files/folders in Finder or the system file manager
+- `:Reload` to re-source the config without restarting Vim
 
 ---
 
@@ -34,12 +39,13 @@ Both configs are **cross-platform**: macOS (Apple Terminal & iTerm2) and Linux (
 ### Plugins
 
 - **NERDTree** — file tree navigation (`Ctrl+n` / `:Tree`)
-- **vim-airline** — enhanced status line with ALE integration
+- **vim-airline** — enhanced status line with ALE integration, clock, and session timer
 - **ALE** — asynchronous linting and auto-fixing on save
 - **vim-commentary** — easy commenting with `gc`
-- **vim-monokai** — Monokai color scheme
+- **vim-monokai** — Monokai color scheme (default)
+- **gruvbox**, **tokyonight**, **onedark**, **moonfly** — additional themes via `:Theme`
 - **emmet-vim** — fast HTML/CSS writing
-- **CtrlP** — fuzzy file finder (`Ctrl+p`)
+- **CtrlP** — fuzzy file finder (`Ctrl+p`), ignores `node_modules`, `.git`, `dist`, `build`
 - **auto-pairs** — auto-close brackets and quotes
 - **vim-gitgutter** — git diff indicators in the gutter
 - **vim-polyglot** — enhanced syntax highlighting for all languages
@@ -91,17 +97,27 @@ cp vim-config/.vimrc $HOME/.vimrc
 
 ## .vimrc.lite — Zero-Plugin Config
 
-A drop-in alternative for servers, fresh machines, or minimal environments. All features are implemented with Vim built-ins — no external plugins or internet access required.
+A drop-in alternative for **servers, fresh machines, SSH sessions, or any environment where you only have Vim** — no plugins, no internet, no `:PlugInstall`. Works in any shell (bash, zsh, sh, etc.).
+
+All features use Vim built-ins: netrw, syntax/filetype detection, built-in colorschemes, and custom Vimscript functions.
 
 | Full `.vimrc` | `.vimrc.lite` equivalent |
 |---------------|--------------------------|
 | NERDTree | netrw (`Lexplore`) |
-| vim-airline | custom built-in `statusline` |
+| vim-airline | custom built-in `statusline` with clock and session timer |
 | CtrlP | `set path+=**` + `:find` with tab completion |
 | vim-commentary | custom `ToggleComment()` function |
 | vim-buftabline | custom `BufTabLine()` function |
+| Plugin themes | built-in themes via `:Theme` |
 
 Comment toggling (`\c`) is filetype-aware and supports: Python, Bash/Shell, Zsh, YAML, JavaScript, Java, C/C++, Vim, HTML, XML.
+
+**Optional OS tools** (only needed for specific features):
+
+| Feature | macOS | Linux |
+|---------|-------|-------|
+| Clipboard | built-in | `+clipboard`, or `xclip` as fallback |
+| `:Open` | built-in (Vim 9.2+) | fallback via `xdg-open` on older Vim |
 
 ### Usage
 
@@ -118,16 +134,41 @@ cp vim-config/.vimrc.lite $HOME/.vimrc
 
 ---
 
+## Commands
+
+Both configs share these commands (leader key is `\`):
+
+| Command | Description |
+|---------|-------------|
+| `:Tree` | Toggle file explorer |
+| `:TreeHidden` | Toggle dotfile visibility in the file tree |
+| `:Theme <name>` | Switch colorscheme (`:Theme list` shows all; `:Theme default` resets) |
+| `:Open [path]` | Open file or folder in Finder / system file manager (Vim 9.2+ built-in; lite falls back on older Vim) |
+| `:Reload` | Re-source the config without restarting Vim |
+
+---
+
 ## Key Mappings
 
-Both configs share the same key mappings.
+Both configs share the same key mappings unless noted.
 
 ### File Navigation
 
 - `Ctrl+n` — toggle file explorer (NERDTree or netrw)
 - `Ctrl+p` — fuzzy file finder (CtrlP, full config only)
 - `:Tree` — command alias to open file explorer
-- `:find <name>` — fuzzy file search with tab completion (lite config)
+- `:find <name>` — file search with tab completion (lite config)
+- `\.` — toggle dotfile visibility in the file tree
+- `Cmd+E` — toggle file explorer (macOS, when terminal forwards Cmd)
+- `Cmd+F` — fuzzy file finder (macOS, full config only)
+
+### File Tree — Dotfiles
+
+Dotfiles (`.git`, `.env`, etc.) are **hidden by default**. Toggle visibility with:
+
+- `\.` or `:TreeHidden` — from anywhere
+- `I` — when focused in NERDTree (full config)
+- `a` — when focused in netrw (lite config)
 
 ### NERDTree File Opening (full config)
 
@@ -191,8 +232,26 @@ Both configs share the same key mappings.
 
 ## Colorscheme
 
-- **Full config**: Monokai (via vim-monokai plugin), falls back to `desert`
-- **Lite config**: `desert` with custom highlight tweaks for cursor line, line numbers, and status bar
+Use `:Theme <name>` to switch themes at any time.
+
+| Config | Default | Available themes |
+|--------|---------|------------------|
+| **Full** (`.vimrc`) | **monokai** | monokai, gruvbox, tokyonight, onedark, moonfly, desert, slate, evening |
+| **Lite** (`.vimrc.lite`) | **desert** | desert, slate, evening, elflord, delek, industry, koehler, ron, shine, torte, zellner |
+
+- `:Theme list` — show available themes and the default
+- `:Theme default` — reset to the config's default theme
+
+The lite config applies custom highlight tweaks for cursor line, line numbers, and status bar on top of built-in themes.
+
+---
+
+## Status Line
+
+Both configs show a **clock** (`HH:MM`) and **session timer** (`MM:SS`) in the status line.
+
+- **Full config**: displayed in vim-airline (right section)
+- **Lite config**: displayed in the built-in statusline
 
 ---
 

@@ -126,23 +126,70 @@ set nobackup
 " COLORSCHEME (built-in)
 " ============================================================================
 
-colorscheme desert
+let s:default_theme = 'desert'
+let s:available_themes = ['desert', 'slate', 'evening', 'elflord', 'delek', 'industry', 'koehler', 'ron', 'shine', 'torte', 'zellner']
+
+execute 'colorscheme' s:default_theme
 call s:ApplyUiHighlights()
 syntax enable
+
+function! s:ApplyTheme(name) abort
+    if a:name ==# 'default'
+        let l:name = s:default_theme
+    elseif a:name ==# 'list' || empty(a:name)
+        echo 'Default: ' . s:default_theme . ' | Available: ' . join(s:available_themes, ', ')
+        return
+    else
+        let l:name = a:name
+    endif
+    try
+        execute 'colorscheme' l:name
+        call s:ApplyUiHighlights()
+        echo 'Theme: ' . l:name
+    catch
+        echoerr 'Theme not available: ' . l:name
+    endtry
+endfunction
+
+function! s:ThemeComplete(arglead, cmdline, cursorpos) abort
+    return filter(['default'] + s:available_themes, 'v:val =~# "^" . a:arglead')
+endfunction
+
+command! -nargs=? -complete=customlist,s:ThemeComplete Theme call s:ApplyTheme(<q-args>)
 
 " ============================================================================
 " BUILT-IN STATUS LINE (replaces vim-airline)
 " ============================================================================
 
 set laststatus=2
+
+let g:vim_session_start = localtime()
+
+function! LiteClock() abort
+    return strftime('%H:%M')
+endfunction
+
+function! LiteSessionTimer() abort
+    let l:elapsed = localtime() - g:vim_session_start
+    return printf('%02d:%02d', l:elapsed / 60, l:elapsed % 60)
+endfunction
+
 set statusline=
-set statusline+=\ %f                   " file path
-set statusline+=\ %m%r                 " modified/readonly flags
-set statusline+=%=                     " right align
-set statusline+=\ %y                   " filetype
-set statusline+=\ [%{&fileencoding}]   " encoding
-set statusline+=\ %l:%c               " line:column
-set statusline+=\ [%p%%]              " percentage
+set statusline+=\ %f
+set statusline+=\ %m%r
+set statusline+=%=
+set statusline+=\ %{LiteClock()}
+set statusline+=\ %{LiteSessionTimer()}
+set statusline+=\ %y
+set statusline+=\ [%{&fileencoding}]
+set statusline+=\ %l:%c
+set statusline+=\ [%p%%]
+
+function! s:RefreshStatusline(timer) abort
+    redrawstatus
+endfunction
+
+let s:status_timer = timer_start(1000, function('s:RefreshStatusline'), {'repeat': -1})
 
 " ============================================================================
 " BUILT-IN FILE EXPLORER (replaces NERDTree)
@@ -154,6 +201,33 @@ let g:netrw_liststyle = 3      " tree view
 let g:netrw_browse_split = 4   " open in previous window
 let g:netrw_altv = 1           " open splits to the right
 let g:netrw_winsize = 25       " 25% width
+
+" Hide dotfiles by default; \. or :TreeHidden to toggle (or press a in netrw)
+let g:netrw_list_hide = '^\..*'
+
+function! s:ToggleTreeDotfiles() abort
+    for l:win in range(1, winnr('$'))
+        let l:buf = winbufnr(l:win)
+        if getbufvar(l:buf, '&filetype') ==# 'netrw'
+            execute l:win . 'wincmd w'
+            normal! a
+            if winnr('$') > 1
+                wincmd p
+            endif
+            return
+        endif
+    endfor
+    if g:netrw_list_hide ==# '^\..*'
+        let g:netrw_list_hide = ''
+        echo 'Tree: showing dotfiles'
+    else
+        let g:netrw_list_hide = '^\..*'
+        echo 'Tree: hiding dotfiles'
+    endif
+endfunction
+
+nnoremap <leader>. :call s:ToggleTreeDotfiles()<CR>
+command! TreeHidden call s:ToggleTreeDotfiles()
 
 " Toggle netrw sidebar with Ctrl+n
 nnoremap <C-n> :Lexplore<CR>
@@ -317,6 +391,52 @@ autocmd FileType yaml       setlocal shiftwidth=2 tabstop=2
 
 " Remove trailing whitespace on save for Python and shell scripts
 autocmd BufWritePre *.py,*.sh,*.bash %s/\s\+$//e
+
+" ============================================================================
+" COMMANDS & UX
+" ============================================================================
+
+" Vim 9.2+ ships :Open (openPlugin.vim). Only define a fallback on older Vim.
+function! s:OpenPath(path) abort
+    let l:path = a:path
+    if empty(l:path)
+        let l:path = expand('%:p')
+        if empty(l:path)
+            let l:path = getcwd()
+        endif
+    else
+        let l:path = fnamemodify(expand(a:path), ':p')
+    endif
+    if !filereadable(l:path) && !isdirectory(l:path)
+        echoerr 'Path does not exist: ' . l:path
+        return
+    endif
+    if s:is_mac
+        silent! call system('open ' . shellescape(l:path))
+    elseif has('win32')
+        silent! call system('start "" ' . shellescape(l:path))
+    else
+        silent! call system('xdg-open ' . shellescape(l:path))
+    endif
+endfunction
+
+function! s:EnsureOpenCommand() abort
+    if exists(':Open') == 2
+        return
+    endif
+    command! -nargs=? -complete=file Open call s:OpenPath(<q-args>)
+endfunction
+
+augroup OpenFallback
+    autocmd!
+    autocmd VimEnter * call s:EnsureOpenCommand()
+augroup END
+
+command! Reload source ~/.vimrc.lite | echo 'Config reloaded'
+
+if s:is_mac
+    nnoremap <D-e> :Lexplore<CR>
+endif
 
 " ============================================================================
 " INITIALIZATION

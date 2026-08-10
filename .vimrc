@@ -228,8 +228,12 @@ Plug 'dense-analysis/ale'
 " Easy commenting/uncommenting
 Plug 'tpope/vim-commentary'
 
-" Monokai color scheme
+" Color schemes
 Plug 'crusoexia/vim-monokai'
+Plug 'morhetz/gruvbox'
+Plug 'ghifarit53/tokyonight-vim'
+Plug 'joshdick/onedark.vim'
+Plug 'bluz71/vim-moonfly-colors'
 
 " HTML/CSS fast writing
 Plug 'mattn/emmet-vim'
@@ -254,15 +258,41 @@ call plug#end()
 " Fuzzy file finder
 nnoremap <C-p> :CtrlP<CR>
 
+let g:ctrlp_custom_ignore = {'dir': 'node_modules\|\.git\|dist\|build'}
+
 " ============================================================================
 " COLORSCHEME
 " ============================================================================
 
-" Enable Monokai color scheme with fallback
+let s:default_theme = 'monokai'
+let s:available_themes = ['monokai', 'gruvbox', 'tokyonight', 'onedark', 'moonfly', 'desert', 'slate', 'evening']
+
+function! s:ApplyTheme(name) abort
+    if a:name ==# 'default'
+        let l:name = s:default_theme
+    elseif a:name ==# 'list' || empty(a:name)
+        echo 'Default: ' . s:default_theme . ' | Available: ' . join(s:available_themes, ', ')
+        return
+    else
+        let l:name = a:name
+    endif
+    try
+        execute 'colorscheme' l:name
+        echo 'Theme: ' . l:name
+    catch
+        echoerr 'Theme not available: ' . l:name . ' (run :PlugInstall)'
+    endtry
+endfunction
+
+function! s:ThemeComplete(arglead, cmdline, cursorpos) abort
+    return filter(['default'] + s:available_themes, 'v:val =~# "^" . a:arglead')
+endfunction
+
+command! -nargs=? -complete=customlist,s:ThemeComplete Theme call s:ApplyTheme(<q-args>)
+
 try
-    colorscheme monokai
+    execute 'colorscheme' s:default_theme
 catch
-    " Fallback if monokai isn't installed yet
     colorscheme desert
 endtry
 
@@ -276,8 +306,16 @@ nnoremap <C-n> :NERDTreeToggle<CR>
 " Custom alias :Tree for NERDTree (toggles, won't open duplicates)
 command! Tree NERDTreeToggle
 
-" Show hidden files (dotfiles) by default
-let g:NERDTreeShowHidden = 1
+" Hide dotfiles by default; \. or :TreeHidden to toggle (or press I in NERDTree)
+let g:NERDTreeShowHidden = 0
+
+function! s:ToggleTreeDotfiles() abort
+    NERDTreeToggleHidden
+    echo g:NERDTreeShowHidden ? 'Tree: showing dotfiles' : 'Tree: hiding dotfiles'
+endfunction
+
+nnoremap <leader>. :call s:ToggleTreeDotfiles()<CR>
+command! TreeHidden call s:ToggleTreeDotfiles()
 
 " Auto-close NERDTree if it's the only window left
 autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif
@@ -356,6 +394,30 @@ let g:ale_python_auto_virtualenv = 1
 " Show ALE errors in airline
 let g:airline#extensions#ale#enabled = 1
 
+" Clock and session timer in statusline
+let g:vim_session_start = localtime()
+
+function! AirlineClock() abort
+    return strftime('%H:%M')
+endfunction
+
+function! AirlineSessionTimer() abort
+    let l:elapsed = localtime() - g:vim_session_start
+    return printf('%02d:%02d', l:elapsed / 60, l:elapsed % 60)
+endfunction
+
+let g:airline_section_z = '%{AirlineClock()} %{AirlineSessionTimer()} %3p%%'
+
+function! s:RefreshStatusline(timer) abort
+    if exists(':AirlineRefresh') == 2
+        silent! AirlineRefresh
+    else
+        redrawstatus
+    endif
+endfunction
+
+let s:status_timer = timer_start(1000, function('s:RefreshStatusline'), {'repeat': -1})
+
 " ============================================================================
 " PYTHON VIRTUAL ENVIRONMENT AUTO-DETECTION
 " ============================================================================
@@ -412,6 +474,53 @@ endif
 
 " Remove trailing whitespace on save for Python and shell scripts
 autocmd BufWritePre *.py,*.sh,*.bash %s/\s\+$//e
+
+" ============================================================================
+" COMMANDS & UX
+" ============================================================================
+
+" Vim 9.2+ ships :Open (openPlugin.vim). Only define a fallback on older Vim.
+function! s:OpenPath(path) abort
+    let l:path = a:path
+    if empty(l:path)
+        let l:path = expand('%:p')
+        if empty(l:path)
+            let l:path = getcwd()
+        endif
+    else
+        let l:path = fnamemodify(expand(a:path), ':p')
+    endif
+    if !filereadable(l:path) && !isdirectory(l:path)
+        echoerr 'Path does not exist: ' . l:path
+        return
+    endif
+    if s:is_mac
+        silent! call system('open ' . shellescape(l:path))
+    elseif has('win32')
+        silent! call system('start "" ' . shellescape(l:path))
+    else
+        silent! call system('xdg-open ' . shellescape(l:path))
+    endif
+endfunction
+
+function! s:EnsureOpenCommand() abort
+    if exists(':Open') == 2
+        return
+    endif
+    command! -nargs=? -complete=file Open call s:OpenPath(<q-args>)
+endfunction
+
+augroup OpenFallback
+    autocmd!
+    autocmd VimEnter * call s:EnsureOpenCommand()
+augroup END
+
+command! Reload source $MYVIMRC | echo 'Config reloaded'
+
+if s:is_mac
+    nnoremap <D-e> :NERDTreeToggle<CR>
+    nnoremap <D-f> :CtrlP<CR>
+endif
 
 " ============================================================================
 " INITIALIZATION
