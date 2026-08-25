@@ -1,0 +1,175 @@
+" ============================================================================
+" Vim Configuration for genuine `vim-tiny` builds (-eval, -syntax, -clipboard)
+" Author: George Gozal
+" No :let, :function, :execute, :if, :colorscheme, :filetype, or plugins —
+" none of that exists without +eval/+syntax. Every line below is a plain
+" Ex/Vi command, verified against `vim --version` on Debian's vim-tiny 9.1.
+" Usage: vim -u ~/.vimrc.tiny   OR   cp vim-config/.vimrc.tiny $HOME/.vimrc
+" ============================================================================
+
+set nocompatible
+set backspace=indent,eol,start
+
+" ============================================================================
+" GENERAL SETTINGS
+" ============================================================================
+
+set number
+set relativenumber
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set cursorline
+set autoindent
+set nowrap
+set ignorecase
+set smartcase
+set mouse=a
+set encoding=utf-8
+set background=dark
+set title
+
+" ============================================================================
+" BETTER DEFAULTS
+" ============================================================================
+" No +extra_search on this build, so 'hlsearch'/'incsearch' don't exist here.
+" No +persistent_undo, so 'undofile'/'undodir' don't exist either.
+
+set hidden
+set splitright
+set splitbelow
+set wildmenu
+set wildmode=list:longest,full
+set wildignore=*/node_modules/*,*/.git/*,*/dist/*,*/build/*
+set showcmd
+set showmatch
+set matchtime=2
+set history=1000
+set updatetime=300
+set lazyredraw
+set noswapfile
+set nobackup
+set ruler
+set laststatus=2
+
+" ============================================================================
+" HAND-ROLLED "THEME"
+" ============================================================================
+" :colorscheme sources colors/*.vim, which use if/exists() internally and
+" would throw E319 here. Plain :highlight calls work fine without +eval.
+
+highlight Normal       ctermfg=252 ctermbg=234
+highlight CursorLine   cterm=NONE ctermbg=236
+highlight CursorLineNr ctermfg=226 cterm=bold
+highlight LineNr       ctermfg=243
+highlight StatusLine   cterm=bold ctermfg=15 ctermbg=236
+highlight StatusLineNC ctermfg=246 ctermbg=236
+highlight Visual       ctermbg=239
+
+" ============================================================================
+" KEY MAPPINGS (leader is the default \, since :let mapleader needs +eval)
+" ============================================================================
+
+nnoremap <C-s> :w<CR>
+nnoremap <C-q> :q<CR>
+inoremap jk <Esc>
+
+" Move lines up/down
+nnoremap <C-j> :m .+1<CR>==
+nnoremap <C-k> :m .-2<CR>==
+vnoremap <C-j> :m '>+1<CR>gv=gv
+vnoremap <C-k> :m '<-2<CR>gv=gv
+
+" Keep visual selection after indent
+vnoremap < <gv
+vnoremap > >gv
+
+" ============================================================================
+" BUFFER & WINDOW NAVIGATION
+" ============================================================================
+
+nnoremap <leader>n :bnext<CR>
+nnoremap <leader>p :bprev<CR>
+nnoremap <leader>d :bdelete<CR>
+nnoremap <leader>b :ls<CR>:b<Space>
+nnoremap <leader>1 :b1<CR>
+nnoremap <leader>2 :b2<CR>
+nnoremap <leader>3 :b3<CR>
+nnoremap <leader>4 :b4<CR>
+nnoremap <leader>5 :b5<CR>
+nnoremap <leader>x :bp<bar>sp<bar>bn<bar>bd<CR>
+nnoremap <leader>v :vsplit<CR>
+nnoremap <leader>s :split<CR>
+nnoremap <leader>w :w<CR>
+nnoremap <leader>q :q<CR>
+
+" ============================================================================
+" FUZZY-ISH FILE FINDER (built-in, no CtrlP)
+" ============================================================================
+
+set path+=**
+" :find <name><Tab>  completes across the whole project tree
+" :b <partial><Tab>  switches buffers with tab completion
+
+" ============================================================================
+" CLIPBOARD (no +clipboard on this build — shell out to xclip instead)
+" ============================================================================
+" Requires xclip installed (apt install xclip). Uses +fork(), which IS
+" available, so :w !cmd / :r !cmd piping works without any scripting.
+
+vnoremap <leader>y :w !xclip -selection clipboard<CR><CR>
+nnoremap <leader>Y :.w !xclip -selection clipboard<CR><CR>
+nnoremap <leader>P :r !xclip -o -selection clipboard<CR>
+
+" ============================================================================
+" STATIC COMMENT INSERT/REMOVE
+" ============================================================================
+" No +eval means no ToggleComment() function, so this isn't toggle-aware —
+" pick the insert or remove mapping for the comment style you need.
+
+nnoremap <leader>c# :s/^/# /<CR>
+vnoremap <leader>c# :s/^/# /<CR>
+nnoremap <leader>u# :s/^\(\s*\)# /\1/<CR>
+vnoremap <leader>u# :s/^\(\s*\)# /\1/<CR>
+
+nnoremap <leader>c/ :s#^#// #<CR>
+vnoremap <leader>c/ :s#^#// #<CR>
+nnoremap <leader>u/ :s#^\(\s*\)// #\1#<CR>
+vnoremap <leader>u/ :s#^\(\s*\)// #\1#<CR>
+
+" ============================================================================
+" FILE TYPE SPECIFIC INDENTATION
+" ============================================================================
+" No :filetype detection on this build, so these match on the filename
+" itself (BufRead/BufNewFile) instead of the usual FileType event.
+
+autocmd BufRead,BufNewFile *.py,*.sh,*.bash,*.conf setlocal shiftwidth=4 tabstop=4
+autocmd BufRead,BufNewFile *.js,*.jsx,*.ts,*.tsx    setlocal shiftwidth=2 tabstop=2
+autocmd BufRead,BufNewFile *.html,*.htm             setlocal shiftwidth=2 tabstop=2
+autocmd BufRead,BufNewFile *.yaml,*.yml             setlocal shiftwidth=2 tabstop=2
+autocmd BufRead,BufNewFile *.json                   setlocal shiftwidth=2 tabstop=2
+
+" ============================================================================
+" AUTO-CLEANUP
+" ============================================================================
+" No +eval means no winsaveview()/winrestview() — the cursor will jump to
+" the last trailing-whitespace match on save. Known trade-off on this build.
+
+autocmd BufWritePre *.py,*.sh,*.bash,*.conf keeppatterns %s/\s\+$//e
+
+" ============================================================================
+" COMMANDS
+" ============================================================================
+
+command! Reload source $MYVIMRC
+command! W w
+command! Q q
+" :Open %        opens the current file
+" :Open some/dir opens an arbitrary path
+command! -nargs=1 -complete=file Open !xdg-open <args>
+
+" ============================================================================
+" INITIALIZATION
+" ============================================================================
+" No +eval means no isdirectory()/mkdir() to auto-create ~/.vim/undodir, and
+" no +persistent_undo to use it anyway. Nothing to do here.
