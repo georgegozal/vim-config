@@ -10,7 +10,6 @@
 
 " Detect operating system
 let s:is_mac = has('mac') || has('macunix')
-let s:is_linux = has('unix') && !has('macunix')
 
 " macOS-specific terminal setup
 if s:is_mac
@@ -386,7 +385,7 @@ let g:ale_fix_on_save = 1
 
 " Python-specific ALE settings
 let g:ale_python_flake8_use_global = 0
-let g:ale_python_flake8_executable = 'python3 -m flake8'
+let g:ale_python_flake8_executable = 'flake8'
 let g:ale_python_flake8_options = '--max-line-length=88'
 let g:ale_python_black_options = '--line-length=88'
 let g:ale_python_auto_virtualenv = 1
@@ -439,7 +438,6 @@ function! ActivateVenv()
         endif
         
         if executable(l:python_path)
-            let g:python3_host_prog = l:python_path
             let $VIRTUAL_ENV = l:venv_dir
             let $PATH = l:venv_dir . 'bin:' . $PATH
             
@@ -453,27 +451,17 @@ endfunction
 autocmd BufRead,BufNewFile *.py call ActivateVenv()
 
 " ============================================================================
-" MACOS PYTHON3 SETUP
-" ============================================================================
-
-if s:is_mac
-    " Try to find Python 3 installation on macOS
-    if executable('python3')
-        let g:python3_host_prog = exepath('python3')
-    elseif executable('/usr/local/bin/python3')
-        let g:python3_host_prog = '/usr/local/bin/python3'
-    elseif executable('/opt/homebrew/bin/python3')
-        " Apple Silicon Mac (M1/M2/M3)
-        let g:python3_host_prog = '/opt/homebrew/bin/python3'
-    endif
-endif
-
-" ============================================================================
 " AUTO-CLEANUP
 " ============================================================================
 
 " Remove trailing whitespace on save for Python and shell scripts
-autocmd BufWritePre *.py,*.sh,*.bash %s/\s\+$//e
+function! s:StripTrailingWhitespace() abort
+    let l:view = winsaveview()
+    keeppatterns %s/\s\+$//e
+    call winrestview(l:view)
+endfunction
+
+autocmd BufWritePre *.py,*.sh,*.bash call s:StripTrailingWhitespace()
 
 " ============================================================================
 " COMMANDS & UX

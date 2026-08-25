@@ -240,7 +240,7 @@ command! Tree Lexplore
 " cause Ctrl+n to open a duplicate sidebar
 autocmd StdinReadPre * let s:std_in=1
 autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists('s:std_in') |
-    \ execute 'cd' fnameescape(argv()[0]) | enew | Lexplore | endif
+    \ execute 'cd' fnameescape(argv()[0]) | enew | Lexplore | wincmd p | endif
 
 
 " ============================================================================
@@ -390,7 +390,13 @@ autocmd FileType yaml       setlocal shiftwidth=2 tabstop=2
 " ============================================================================
 
 " Remove trailing whitespace on save for Python and shell scripts
-autocmd BufWritePre *.py,*.sh,*.bash %s/\s\+$//e
+function! s:StripTrailingWhitespace() abort
+    let l:view = winsaveview()
+    keeppatterns %s/\s\+$//e
+    call winrestview(l:view)
+endfunction
+
+autocmd BufWritePre *.py,*.sh,*.bash call s:StripTrailingWhitespace()
 
 " ============================================================================
 " COMMANDS & UX
@@ -432,7 +438,7 @@ augroup OpenFallback
     autocmd VimEnter * call s:EnsureOpenCommand()
 augroup END
 
-command! Reload source ~/.vimrc.lite | echo 'Config reloaded'
+command! Reload source $MYVIMRC | echo 'Config reloaded'
 
 if s:is_mac
     nnoremap <D-e> :Lexplore<CR>
